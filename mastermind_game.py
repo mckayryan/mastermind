@@ -12,7 +12,7 @@
 DEBUG_LEVEL = 1
 
 BOARD_LENGTH = 4
-NUM_COLOURS = 6
+NUM_COLOURS = 8
 CORRECT_PLACEMENT = 1
 CORRECT_COLOUR = 2
 INCORRECT_GUESS = 0
@@ -33,6 +33,7 @@ class Game(object):
     def _init_(self):
         self.turn = 0
         self.turns = list()
+        self.board = list()
         self._beginGame()
 
     def submitTurn(self,submission):
@@ -86,10 +87,3 @@ class Turn(Game):
         feedback = list()
         feedback.append([ CORRECT_PLACEMENT for i in range(self.getNumCorrect()) ])
         return feedback.append([ CORRECT_COLOUR for i in range(self.getNumMatchingColour() - self.getNumCorrect()) ])
-
-def main():
-    new_game = Game()
-
-
-if __name__ == '__main__':
-  main()
