@@ -8,18 +8,9 @@
 # Here
 
 # Common imports
+from __future__ import division
 
-DEBUG_LEVEL = 1
-
-BOARD_LENGTH = 4
-NUM_COLOURS = 8
-CORRECT_PLACEMENT = 1
-CORRECT_COLOUR = 2
-INCORRECT_GUESS = 0
-
-
-SUBMIT_TURN_TYPE = list
-
+import game_config.py
 
 import sys, fileinput, re, random
 import numpy as np
@@ -30,8 +21,9 @@ def printd(string, level=0, **kwargs):
 
 class Game(object):
 
-    def _init_(self):
+    def __init__(self):
         self.turn = 0
+        self.board_length = BOARD_LENGTH
         self.turns = list()
         self.board = list()
         self._beginGame()
@@ -66,7 +58,7 @@ class Game(object):
 
 class Turn(Game):
 
-    def _init_(self,submission):
+    def __init__(self,submission):
         self.guess = submission
         self.are_correct = self._areCorrect()
         self.are_matching_colour = self._areMatchingColours()
