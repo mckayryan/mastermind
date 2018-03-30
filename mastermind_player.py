@@ -18,28 +18,39 @@ import numpy as np
 import itertools as it
 import operator as op
 
-PRIOR_COUNT = 2
+class GameMath(object):
+
+    def __init__(self):
+        pass
+
+    def Pboard(self, board):
+        return 1/len(board)
+
+    def _hypergeometric_pdf(self, size_variates, selection_variates):
+        l = lambda x,y: x*y
+        n = reduce(l, [ self._ncr(n,r) for n,r in zip(size_variates,selection_variates)])
+        d = self._ncr(size_variates.sum(),selection_variates.sum())
+        printd('Hypogeometric pdf\nn:{N}\td:{D}\t',N=n,D=d)
+        return  n / d
+
+    def _ncr(self,n,r):
+        r = min(r, n-r)
+        numerator = reduce(op.mul, xrange(n, n-r, -1), 1)
+        denominator = reduce(op.mul, xrange(1, r+1), 1)
+        return numerator//denominator
 
 
 
-def printd(string, level=0, **kwargs):
-    if DEBUG_LEVEL >= level:
-        print(string.format(**kwargs))
 
-class GameState(object):
+class GameState(GameMath):
 
     def __init__(self,colours,board_length):
         printd('\tGame Stats\n{col}\tColours\n{brd}\tBoard Length',col=colours,brd=board_length,level=1)
         self.turn = 0
         self.possible_boards = sorted([ item for item in it.permutations(range(colours),board_length)])
 
-        self.boardP = dict()
-        for item in self.possible_boards:
-            self.boardP[self._dict_key(item)] = 1/len(self.possible_boards)
+        self.turn_items = [ dict(feedback=np.array([]),actions=np.array([]),valid_boards=self.possible_boards) ]
 
-        printd('{N}\tPossible Boards\n{P}\tPrior Probability',N=len(self.possible_boards),P=1/len(self.possible_boards),level=1)
-
-        self.turn_items = dict(feedback=np.array([]),actions=np.array([]),valid_boards=self.possible_boards)
 
     def derive_constraints(self, actions, feedback, valid_boards):
         valid_actions = list()
@@ -85,45 +96,15 @@ class GameState(object):
 
 
 
-
-
-class GameMath(object):
-
-    def __init__(self):
-        pass
-
-    def _hypogeometric_pdf(self, num_variates, size_variates, selection_variates):
-        l = lambda x,y: x*y
-        n = reduce(l, [ self._ncr(n,r) for n,r in zip(size_variates,selection_variates)])
-        d = self._ncr(size_variates.sum(),selection_variates.sum())
-        printd('Hypogeometric pdf\nn:{N}\td:{D}\t',N=n,D=d)
-        return  n / d
-
-    def _ncr(self,n,r):
-        r = min(r, n-r)
-        numerator = reduce(op.mul, xrange(n, n-r, -1), 1)
-        denominator = reduce(op.mul, xrange(1, r+1), 1)
-        return numerator//denominator
-
-
-
-
-class Player(GameState, GameMath):
+class Player(GameState):
 
     def __init__(self, colours, board_length):
         GameState.__init__(self,colours,board_length)
-
-
-
+        self.boardP = dict()
+        #self._updateBoardPs(self.turn_items,self.turn)
 
     def turn(self):
-        # Update Probabilities
-        if not (self.feedback == []).all():
-            self._updateBoardP()
-
-        # decide action
-        action = [1,2,3,4]
-
+        action = self._decide_act()
         self._act(action)
         self._processFeedback()
 
@@ -132,11 +113,14 @@ class Player(GameState, GameMath):
         # Submit turn somehow
         printd('Turn {T}:\tSubmitted {act}',T=self.turn,act=action)
 
-    def _updateBoardP(self):
+    def _updateBoardPs(self, turn_items, turn):
+        for item in self.possible_boards:
+            self.boardP[self._dict_key(item)] = self.Pboard(turn_items[turn]['valid_boards'])
+
+        printd('{N}\tPossible Boards\n{P}\tPrior Probability',N=len(turn_items[turn]['valid_boards']),P=1/len(turn_items[turn]['valid_boards']),level=1)
+
+    def _decide_act(self,):
         pass
-
-
-
 
 
     def _updateP(self):
@@ -164,12 +148,12 @@ class Player(GameState, GameMath):
 
 def main():
     g = GameState(NUM_COLOURS,BOARD_LENGTH)
-    actions = [[0,1,2,3],[1,2,4,5]]
-    #,[1,4,5]]
-    feedback = [ { CORRECT_PLACEMENT:2, CORRECT_COLOUR:0 }, { CORRECT_PLACEMENT:1, CORRECT_COLOUR:3 } ]
-    # , dict(CORRECT_PLACEMENT=1,CORRECT_COLOUR=2)
+    actions = [[0,1,2,3],[0,1,4,5]]
+    feedback = [ { CORRECT_PLACEMENT:0, CORRECT_COLOUR:2 }, { CORRECT_PLACEMENT:2, CORRECT_COLOUR:2 } ]
     g.derive_constraints(actions, feedback, g.possible_boards)
 
 
 if __name__ == '__main__':
   main()
+
+#

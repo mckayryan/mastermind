@@ -6,6 +6,7 @@
 # Program
 # Description
 # Here
+from __future__ import division
 
 from mastermind_game import Game
 from mastermind_game import Turn

@@ -12,3 +12,12 @@ INCORRECT_GUESS = 0
 TEST = 'TEST'
 
 SUBMIT_TURN_TYPE = list
+
+def printd(string, level=0, **kwargs):
+    if DEBUG_LEVEL >= level:
+        print(string.format(**kwargs))
+
+def xstr(_str):
+    if _str is None:
+        _str = ''
+    return str(_str)
