@@ -61,7 +61,7 @@ class TreeNode(object):
         return ''.join(to_print)
 
 
-class Tree(object):
+class GameTree(object):
 
     def __init__(self):
         self.nodes = dict()
@@ -74,11 +74,12 @@ class Tree(object):
             root = new_node.get_id()
         return new_node.get_id()
 
-    def add_node_children(self,node_id,child_feedbacks):
+    def add_node_children(self,node_id,child_feedbacks,child_actions):
         child_ids = self.nodes[node_id].write_child_node_ids(child_feedbacks)
-        for child in child_feedbacks:
+        for i, child in enumerate(child_feedbacks):
             feedbacks = self.nodes[node_id].get_feedbacks() + [child]
-            actions = self.nodes[node_id].get_actions()
+            actions = child_actions[i]
+            # get valid actions for child
             self.add_node(node_id,feedbacks,actions)
         return child_ids
 
@@ -109,7 +110,6 @@ class Tree(object):
             self.root = None
         del self.nodes[node_id]
 
-
     def prune_sub_tree(self,sub_tree_root_id):
         node_ids = self.get_sub_tree_ids(sub_tree_root_id)
         # make sure leaves are at the bottom
@@ -119,6 +119,7 @@ class Tree(object):
 
     def __str__(self):
         print self.nodes
+
 
 def main():
     pass

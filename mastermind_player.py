@@ -11,6 +11,7 @@
 
 from __future__ import division
 from game_config import *
+from board_tree import *
 
 
 import sys, fileinput, re, random
@@ -41,16 +42,14 @@ class GameMath(object):
 
 
 
-
 class GameState(GameMath):
 
     def __init__(self,colours,board_length):
         printd('\tGame Stats\n{col}\tColours\n{brd}\tBoard Length',col=colours,brd=board_length,level=1)
         self.turn = 0
-        self.possible_boards = sorted([ item for item in it.permutations(range(colours),board_length)])
+        self.all_actions = sorted([ item for item in it.permutations(range(colours),board_length)])
 
-        self.turn_items = [ dict(feedback=np.array([]),actions=np.array([]),valid_boards=self.possible_boards) ]
-
+        self.turn_items = [ dict(feedbacks=list(),actions=list(),valid_boards=self.all_actions) ]
 
     def derive_constraints(self, actions, feedback, valid_boards):
         valid_actions = list()
@@ -67,6 +66,7 @@ class GameState(GameMath):
 
         print np.array(valid_actions)
         printd('Intersection Valid Actions {inter}\n',inter=set.intersection(*valid_actions_sets), level=1)
+        return valid_actions
 
     def _constrained_permutations(self,number_correct,number_colours_correct,board,valid_boards):
         valid = list()
@@ -83,13 +83,26 @@ class GameState(GameMath):
                 valid.append(pitem)
         return valid
 
-
-    def processFeedback(self):
+    def _process_feedback(self):
         f = input('Please input feedback in form [#correct_place,#correct_colour]: ')
         feedback = None
         if type(f) is list and len(f) == 2:
-            feedback = dict(CORRECT_PLACEMENT=f[0],CORRECT_COLOUR=f[1])
+            feedback = [f[0],f[1]]
         return feedback
+
+    def get_turn(self):
+        return self.turn
+
+    def record_turn(self, action, feedback):
+        current_feedback = list()
+        current_actions = list()
+        if self.turn > 0:
+            current_feedbacks = self.turn_items[self.turn-1]['feedback']
+            current_actions = self.turn_items[self.turn-1]['action']
+
+        self.turn_items[self.turn]['feedback'] = current_feedbacks.append(feedback)
+        self.turn_items[self.turn]['action'] = current_actions.append(action)
+        self.turn += 1
 
     def _dict_key(self,array):
         return ''.join([ str(item) for item in array])
@@ -100,49 +113,26 @@ class Player(GameState):
 
     def __init__(self, colours, board_length):
         GameState.__init__(self,colours,board_length)
-        self.boardP = dict()
-        #self._updateBoardPs(self.turn_items,self.turn)
+        self.action_tree = GameTree()
 
     def turn(self):
         action = self._decide_act()
         self._act(action)
-        self._processFeedback()
+        feedback = self._process_feedback()
+        valid_actions = self.derive_constraints()
+        self.record_turn(action, feedback)
 
-    def act(self,action):
-        self.actions.append(action)
-        # Submit turn somehow
-        printd('Turn {T}:\tSubmitted {act}',T=self.turn,act=action)
+    def _act(self,action):
+        print 'Current Action: ' + xstr(action)
+        new_actions = self.actions.append(action)
+        print 'New Actions: ' + xstr(new_actions)
+        printd('Turn {T}:\tSubmitted {act}',T=self.get_turn(),act=action)
 
-    def _updateBoardPs(self, turn_items, turn):
-        for item in self.possible_boards:
-            self.boardP[self._dict_key(item)] = self.Pboard(turn_items[turn]['valid_boards'])
-
-        printd('{N}\tPossible Boards\n{P}\tPrior Probability',N=len(turn_items[turn]['valid_boards']),P=1/len(turn_items[turn]['valid_boards']),level=1)
-
-    def _decide_act(self,):
-        pass
+    def _decide_act(self):
+        if self.get_turn == 0:
+            action = self.all_actions[random.randint(0,len(self.all_actions)-1)]
 
 
-    def _updateP(self):
-        self.P = np.divide(self.counts,self.counts.sum(axis=0))
-        self._checkP()
-        printd('Updated Probabilities Turn {C}:\n{prob}\n',C=self.turn,prob=self.P)
-
-    def _updateCounts(self,action,feedback):
-        correct = feedback[0]
-        colour = feedback[1]
-        for pos in range(len(action)):
-            self.counts[pos,action[pos]] += correct
-            for act in action:
-                if act not in [action[pos],BOARD_LENGTH]:
-                    self.counts[pos,action[act]] += (colour/(BOARD_LENGTH-1))
-
-        printd('Updated Counts Turn {C}:\n{counts}\n',C=self.turn,counts=self.counts)
-
-    def _checkP(self):
-        if not (self.P.sum(axis=0) == [1]*NUM_COLOURS).all():
-            print "Probabilities don't sum to 1!!"
-            print self.P
 
 
 
@@ -150,7 +140,7 @@ def main():
     g = GameState(NUM_COLOURS,BOARD_LENGTH)
     actions = [[0,1,2,3],[0,1,4,5]]
     feedback = [ { CORRECT_PLACEMENT:0, CORRECT_COLOUR:2 }, { CORRECT_PLACEMENT:2, CORRECT_COLOUR:2 } ]
-    g.derive_constraints(actions, feedback, g.possible_boards)
+    g.derive_constraints(actions, feedback, g.all_actions)
 
 
 if __name__ == '__main__':
