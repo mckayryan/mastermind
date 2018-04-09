@@ -208,7 +208,6 @@ class Player(GameState):
                         new_feedbacks = last_feedback + [feedback]
                         constrained_actions = self.derive_constraints(new_actions, new_feedbacks, last_valid_actions)
                         if len(constrained_actions) > 0 :
-                            #print new_actions, feedback len(constrained_actions)
                             scores[self._dict_key(act)][self._dict_key(feedback)] = len(constrained_actions)
                             scores[self._dict_key(act)]['counts'].append(len(constrained_actions))
                     scores[self._dict_key(act)]['entropy'] = self.entropy(scores[self._dict_key(act)]['counts'])
@@ -223,19 +222,11 @@ class Player(GameState):
 def main():
     p = Player(NUM_COLOURS,BOARD_LENGTH)
 
-    # a = [(0,1,3,2)]
-    # f = [(0,4)]
-    # c = p.derive_constraints(actions=a,feedback=f,valid_actions=p.get_valid_actions())
-    #print    p._constrained_permutations(number_correct=0,number_colours_correct=4,action=(0,1,3,2),valid_actions=p.get_valid_actions())
     while True:
         p.play_turn()
 
-    # actions = [[0,1,2,3],[0,1,4,5]]
-    # feedback = [ { CORRECT_PLACEMENT:0, CORRECT_COLOUR:2 }, { CORRECT_PLACEMENT:2, CORRECT_COLOUR:2 } ]
-    # g.derive_constraints(actions, feedback, g.all_actions)
-
-
+   
 if __name__ == '__main__':
   main()
 
-#
+
